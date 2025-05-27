@@ -1,11 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
   const chatMessages = document.getElementById('chat-messages');
   const userInput = document.getElementById('user-input');
-  const sendButton = document.getElementById('send-button');  // Try the auto provider instead of specifying Novita
+  const sendButton = document.getElementById('send-button');
+
   // Use Google Gemini Flash 2.0 API
   const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent";
-    // Get API token from config.js (which should be gitignored)
-  // If CONFIG is not defined, provide instructions for setup
+  
+  // Get API token from config.js (which should be gitignored)
   const GEMINI_API_KEY = window.CONFIG?.GEMINI_API_KEY;
 
   // Chat history to maintain context
@@ -57,105 +58,8 @@ document.addEventListener('DOMContentLoaded', () => {
       thinking.remove();
     }
   }
-  // Function to format the prompt for text generation models
-  function formatPrompt(userMessage) {
-    // For simple text generation, just use the user message with minimal context
-    let prompt = "";
-    
-    // Add some recent context if available
-    if (chatHistory.length > 0) {
-      const recentHistory = chatHistory.slice(-2); // Last 2 messages for context
-      for (const msg of recentHistory) {
-        if (msg.role === 'user') {
-          prompt += `Human: ${msg.content}\n`;
-        } else {
-          prompt += `Assistant: ${msg.content}\n`;
-        }
-      }
-    }
-    
-    // Add the new user message
-    prompt += `Human: ${userMessage}\nAssistant:`;
-    
-    return prompt;
-  }
 
-  // Function to format messages for the new chat completions API
-  function formatMessages(userMessage) {
-    // Build messages array in OpenAI format
-    let messages = [];
-    
-    // Add system message for context
-    messages.push({
-      role: "system",
-      content: "You are a helpful AI research assistant. Provide clear, informative responses to help with research and learning."
-    });
-    
-    // Add chat history
-    if (chatHistory.length > 0) {
-      const recentHistory = chatHistory.slice(-6); // Last 6 messages for context
-      for (const msg of recentHistory) {
-        messages.push({
-          role: msg.role === 'user' ? 'user' : 'assistant',
-          content: msg.content
-        });
-      }
-    }
-    
-    // Add the new user message
-    messages.push({
-      role: "user",
-      content: userMessage
-    });
-    
-    return messages;
-  }
-  // Function to test the serverless inference API
-  async function testAPI() {
-    console.log("Testing Hugging Face Serverless Inference API...");
-    console.log("API URL:", API_URL);
-    console.log("API Token starts with:", API_TOKEN.substring(0, 10) + "...");
-    
-    try {
-      const testResponse = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${API_TOKEN}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          inputs: "Hello, how are you?",
-          parameters: {
-            max_new_tokens: 50,
-            temperature: 0.7,
-            return_full_text: false
-          }
-        })
-      });
-      
-      console.log("API test status:", testResponse.status);
-      const responseText = await testResponse.text();
-      console.log("API test response:", responseText);
-      
-      if (testResponse.status === 200) {
-        try {
-          const responseData = JSON.parse(responseText);
-          console.log("✅ API is working!");
-          console.log("Sample response:", responseData);
-          return true;
-        } catch (e) {
-          console.log("Response is not JSON:", responseText);
-          return false;
-        }
-      } else {
-        console.log("❌ API test failed");
-        return false;
-      }
-    } catch (error) {
-      console.error("API test error:", error);
-      return false;
-    }
-  }  // Function to query the Hugging Face Serverless Inference API  // Function to query the Gemini Flash 2.0 API
+  // Function to query the Gemini Flash 2.0 API
   async function queryLLM(userMessage) {
     // Check if Gemini API key is configured
     if (!GEMINI_API_KEY) {
@@ -172,14 +76,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const contents = [
       ...history,
       { role: 'user', parts: [{ text: userMessage }] }
-    ];
-
-    try {
+    ];    try {
       console.log("Sending request to Gemini Flash 2.0 endpoint...");
       console.log("Contents:", contents);
 
-
-      // Gemini expects the API key as a query parameter, and NO Authorization header
+      // Gemini expects the API key as a query parameter
       const response = await fetch(`${API_URL}?key=${GEMINI_API_KEY}`, {
         method: 'POST',
         headers: {
@@ -249,20 +150,15 @@ document.addEventListener('DOMContentLoaded', () => {
       event.preventDefault();
       handleUserMessage();
     }
-  });  // Log info about the API being used
+  });
+
+  // Log info about the API being used
   console.log("Endpoint:", API_URL);
   
   // Add initial message
-  if (GEMINI_API_KEY === "AIzaSyBz9kUpRPqKf18jbodv7q0UlJF1oXwLBp4") {
-    addMessage("Configuration needed: Please create a config.js file with your Hugging Face API token. See README for instructions.", "bot");
+  if (!GEMINI_API_KEY) {
+    addMessage("Configuration needed: Please create a config.js file with your Gemini API key. See README for instructions.", "bot");
   } else {
-    // Test API connectivity first
-    testAPI().then(isWorking => {
-      if (isWorking) {
-        addMessage("✅ Connected to AI model. What would you like to chat about?", "bot");
-      } else {
-        addMessage("⚠️ Could not connect to the AI model. This might be due to API token issues or service unavailability. Check the console for details.", "bot");
-      }
-    });
+    addMessage("✅ Connected to Gemini AI model. What would you like to chat about?", "bot");
   }
 });
