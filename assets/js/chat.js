@@ -1,7 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
   const chatMessages = document.getElementById('chat-messages');
   const userInput = document.getElementById('user-input');
-  const sendButton = document.getElementById('send-button');  const paperUrlInput = document.getElementById('paper-url');
+  const sendButton = document.getElementById('send-button');
+  const paperUrlInput = document.getElementById('paper-url');
   const loadPaperButton = document.getElementById('load-paper');
   const clearPaperButton = document.getElementById('clear-paper');
   const paperStatus = document.getElementById('paper-status');
@@ -297,10 +298,9 @@ Note: This is the paper's metadata and abstract. For detailed analysis, please c
 
   // Log info about the API being used
   console.log("Endpoint:", API_URL);
-  
-  // Add initial message
-  if (!GEMINI_API_KEY) {
-    addMessage("Configuration needed: Please create a config.js file with your Gemini API key. See README for instructions.", "bot");
+    // Add initial message
+  if (!GEMINI_API_KEY || GEMINI_API_KEY === "your-gemini-api-key-here") {
+    addMessage("⚙️ **Configuration needed:** For local development, copy `config.template.js` to `config.js` and add your Gemini API key. For production, the key is injected via GitHub Actions.", "bot");
   } else {
     addMessage("✅ Connected to Gemini AI model. What would you like to chat about?", "bot");
   }

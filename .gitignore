@@ -1,0 +1,12 @@
+# API Keys and sensitive configuration
+assets/js/config.js
+
+# Development files
+.vscode/
+.DS_Store
+*.log
+node_modules/
+
+# Temporary files
+*.tmp
+*.temp
