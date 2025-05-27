@@ -12,8 +12,14 @@
   <body>
     <nav id="navbar-placeholder" aria-label="Main navigation"></nav>
     <section class="welcome-container">
-      <h1>Welcome to AI Research Helper</h1>
-      <div class="chat-container">
+      <h1>Welcome to AI Research Helper</h1>      <div class="chat-container">        <div class="paper-input-container">
+          <div>
+            <input type="url" id="paper-url" placeholder="Enter arXiv or archive.org paper URL (optional)" />
+            <button id="load-paper">Load Paper</button>
+            <button id="clear-paper">Clear</button>
+          </div>
+          <div id="paper-status"></div>
+        </div>
         <div class="chat-messages" id="chat-messages">
         </div>
         <div class="chat-input-container">

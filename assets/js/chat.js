@@ -1,16 +1,21 @@
 document.addEventListener('DOMContentLoaded', () => {
   const chatMessages = document.getElementById('chat-messages');
   const userInput = document.getElementById('user-input');
-  const sendButton = document.getElementById('send-button');
+  const sendButton = document.getElementById('send-button');  const paperUrlInput = document.getElementById('paper-url');
+  const loadPaperButton = document.getElementById('load-paper');
+  const clearPaperButton = document.getElementById('clear-paper');
+  const paperStatus = document.getElementById('paper-status');
 
   // Use Google Gemini Flash 2.0 API
   const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent";
   
   // Get API token from config.js (which should be gitignored)
   const GEMINI_API_KEY = window.CONFIG?.GEMINI_API_KEY;
-
   // Chat history to maintain context
   let chatHistory = [];
+  
+  // Paper context storage
+  let paperContext = null;
 
   // Function to add a message to the chat UI
   function addMessage(message, sender) {
@@ -58,7 +63,6 @@ document.addEventListener('DOMContentLoaded', () => {
       thinking.remove();
     }
   }
-
   // Function to query the Gemini Flash 2.0 API
   async function queryLLM(userMessage) {
     // Check if Gemini API key is configured
@@ -72,11 +76,17 @@ document.addEventListener('DOMContentLoaded', () => {
       parts: [{ text: msg.content }]
     }));
 
+    // Prepare the user message with paper context if available
+    let contextualMessage = userMessage;
+    if (paperContext) {
+      contextualMessage = `Research Paper Context:\n${paperContext.content}\n\nUser Question: ${userMessage}`;
+    }
+
     // Add the new user message
     const contents = [
       ...history,
-      { role: 'user', parts: [{ text: userMessage }] }
-    ];    try {
+      { role: 'user', parts: [{ text: contextualMessage }] }
+    ];try {
       console.log("Sending request to Gemini Flash 2.0 endpoint...");
       console.log("Contents:", contents);
 
@@ -116,6 +126,129 @@ document.addEventListener('DOMContentLoaded', () => {
       return "Error: I encountered a problem connecting to the Gemini API. This might be due to CORS issues, network problems, or API downtime. Please check the console for more details.";
     }
   }
+  // Function to extract paper content from URL
+  async function loadPaperFromUrl(url) {
+    try {
+      paperStatus.textContent = 'Loading paper information...';
+      paperStatus.className = 'loading';
+      
+      // Handle arXiv papers
+      if (url.includes('arxiv.org')) {
+        const paperInfo = await getArxivPaperInfo(url);
+          if (paperInfo) {
+          paperContext = {
+            url: paperInfo.pdfUrl,
+            title: paperInfo.title,
+            authors: paperInfo.authors,
+            content: `Research Paper: "${paperInfo.title}"
+Authors: ${paperInfo.authors}
+ArXiv ID: ${paperInfo.arxivId}
+
+Abstract: ${paperInfo.summary}
+
+PDF URL: ${paperInfo.pdfUrl}
+
+Note: This is the paper's metadata and abstract. For detailed analysis, please copy and paste specific sections from the PDF that you'd like to discuss.`
+          };
+          
+          paperStatus.textContent = `✅ Loaded: ${paperInfo.title}`;
+          paperStatus.className = 'success';
+          
+          addMessage(`📄 **Paper loaded:** I'm ready to discuss this paper!`, 'bot');
+          return true;
+        } else {
+          throw new Error('Could not retrieve paper information from arXiv');
+        }
+      }
+      
+      // Handle other archive.org URLs
+      else if (url.includes('archive.org')) {
+        paperContext = {
+          url: url,
+          title: 'Archive.org Document',
+          content: `Document URL: ${url}\n\nNote: Please copy and paste relevant sections from this document to discuss them.`
+        };
+          paperStatus.textContent = '✅ Archive.org URL loaded';
+        paperStatus.className = 'success';
+        
+        addMessage(`📄 **Archive.org document loaded**\n\nI'm ready to discuss this document! Please copy and paste relevant sections or ask questions about it.`, 'bot');
+        return true;
+      }
+      
+      else {
+        throw new Error('Please provide a valid arXiv or archive.org URL');
+      }
+      
+    } catch (error) {
+      console.error('Error loading paper:', error);
+      paperStatus.textContent = `❌ Error: ${error.message}`;
+      paperStatus.className = 'error';
+      return false;
+    }
+  }
+
+  // Advanced function to extract arXiv paper metadata
+  async function getArxivPaperInfo(arxivId) {
+    try {
+      // Extract arXiv ID from URL
+      const id = arxivId.replace(/.*arxiv\.org\/(abs|pdf)\//, '').replace('.pdf', '');
+      
+      // Use arXiv API to get paper metadata
+      const apiUrl = `http://export.arxiv.org/api/query?id_list=${id}`;
+      
+      // Note: This might have CORS issues in browser, but shows the concept
+      const response = await fetch(apiUrl);
+      const xmlText = await response.text();
+      
+      // Parse XML response (simplified)
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+      
+      const title = xmlDoc.querySelector('title')?.textContent?.replace('arXiv:', '').trim();
+      const summary = xmlDoc.querySelector('summary')?.textContent?.trim();
+      const authors = Array.from(xmlDoc.querySelectorAll('author name')).map(name => name.textContent);
+      
+      return {
+        title: title || 'Unknown Title',
+        authors: authors.length > 0 ? authors.join(', ') : 'Unknown Authors',
+        summary: summary || 'No summary available',
+        arxivId: id,
+        pdfUrl: `https://arxiv.org/pdf/${id}.pdf`
+      };
+    } catch (error) {
+      console.error('Error fetching arXiv info:', error);
+      return null;
+    }
+  }
+  
+  // Function to clear paper context
+  function clearPaperContext() {
+    paperContext = null;
+    paperUrlInput.value = '';
+    paperStatus.textContent = '';
+    paperStatus.className = '';
+    addMessage('📄 Paper context cleared. You can now load a new paper or chat without paper context.', 'bot');
+  }
+
+  // Function to handle paper loading
+  async function handleLoadPaper() {
+    const url = paperUrlInput.value.trim();
+    
+    if (!url) {
+      paperStatus.textContent = 'Please enter a paper URL';
+      paperStatus.className = 'error';
+      return;
+    }
+    
+    // Validate URL format
+    if (!url.includes('arxiv.org') && !url.includes('archive.org')) {
+      paperStatus.textContent = 'Please enter an arXiv or archive.org URL';
+      paperStatus.className = 'error';
+      return;
+    }
+    
+    await loadPaperFromUrl(url);
+  }
 
   // Function to handle user message submission
   async function handleUserMessage() {
@@ -140,10 +273,11 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Add AI response to chat
     addMessage(response, 'bot');
-  }
-
-  // Event listeners
+  }  // Event listeners
   sendButton.addEventListener('click', handleUserMessage);
+  loadPaperButton.addEventListener('click', handleLoadPaper);
+  clearPaperButton.addEventListener('click', clearPaperContext);
+  clearPaperButton.addEventListener('click', clearPaperContext);
   
   userInput.addEventListener('keypress', (event) => {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -151,6 +285,15 @@ document.addEventListener('DOMContentLoaded', () => {
       handleUserMessage();
     }
   });
+  
+  paperUrlInput.addEventListener('keypress', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      handleLoadPaper();
+    }
+  });
+
+  loadPaperButton.addEventListener('click', handleLoadPaper);
 
   // Log info about the API being used
   console.log("Endpoint:", API_URL);
