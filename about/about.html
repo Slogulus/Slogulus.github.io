@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />    <title>AI Research Tool</title>
+    <link rel="stylesheet" type="text/css" href="../assets/css/styles.css" />
+    <script defer src="../assets/js/navbar.js"></script>
+  </head>
+  <body>
+    <nav id="navbar-placeholder" aria-label="Main navigation"></nav>    <section class="welcome-container">
+      <h1>How to Use This Tool</h1>
+      <p class="intro">This tool allows you to connect research papers from arXiv and Archive.org directly to an AI assistant for enhanced understanding and analysis.</p>
+      
+      <div class="instruction-section">
+        <h2>Getting Started</h2>
+        <ol>
+          <li><strong>Load a Paper:</strong> Enter an arXiv or Archive.org URL in the paper input field</li>
+          <li><strong>Start Chatting:</strong> Ask questions about the paper or paste specific sections for analysis</li>
+        </ol>
+      </div>
+
+      <div class="instruction-section">
+        <h2>Loading Papers</h2>
+        <h3>arXiv Papers</h3>
+        <p>Simply paste any arXiv URL (abstract or PDF) into the paper input field:</p>
+        <ul>
+          <li><code>https://arxiv.org/abs/2301.07041</code></li>
+          <li><code>https://arxiv.org/pdf/2301.07041.pdf</code></li>
+        </ul>
+        <p>The tool will automatically fetch the paper's title, authors, and abstract for context.</p>
+
+        <h3>Archive.org Documents</h3>
+        <p>Enter any Archive.org URL to set up document context:</p>
+        <ul>
+          <li><code>https://archive.org/details/document-name</code></li>
+        </ul>
+      </div>
+
+      <div class="instruction-section">
+        <h2>Using the Chat Interface</h2>
+        <h3>Without a Paper Loaded</h3>
+        <p>Ask general research questions or get help with academic topics:</p>
+        <ul>
+          <li>"Explain machine learning algorithms"</li>
+          <li>"What is the difference between supervised and unsupervised learning?"</li>
+          <li>"Help me understand neural networks"</li>
+        </ul>
+
+        <h3>With a Paper Loaded</h3>
+        <p>The AI has access to the paper's metadata and abstract. You can:</p>
+        <ul>
+          <li><strong>Ask about the abstract:</strong> "What is the main contribution of this paper?"</li>
+          <li><strong>Request summaries:</strong> "Summarize the key findings"</li>
+          <li><strong>Get explanations:</strong> "Explain the methodology described in the abstract"</li>
+          <li><strong>Compare concepts:</strong> "How does this relate to transformer models?"</li>
+        </ul>
+
+        <h3>Deep Analysis with Copy-Paste</h3>
+        <p>For detailed analysis of specific sections:</p>
+        <ol>
+          <li>Open the PDF in another tab</li>
+          <li>Copy the section you want to analyze</li>
+          <li>Paste it into the chat with your question</li>
+          <li>Example: "Can you explain this methodology section: [pasted text]"</li>
+        </ol>
+      </div>
+
+      <div class="instruction-section">
+        <h2>Example Workflows</h2>
+        
+        <div class="workflow">
+          <h3>📊 Research Paper Analysis</h3>
+          <ol>
+            <li>Load an arXiv paper: <code>https://arxiv.org/abs/2301.07041</code></li>
+            <li>Ask: "What problem does this paper solve?"</li>
+            <li>Follow up: "What are the main limitations?"</li>
+            <li>Copy specific results section and ask: "Interpret these experimental results"</li>
+          </ol>
+        </div>
+
+        <div class="workflow">
+          <h3>🔍 Literature Review Support</h3>
+          <ol>
+            <li>Load multiple papers one at a time</li>
+            <li>Ask: "Compare this approach to [previous method]"</li>
+            <li>Request: "Identify gaps in the current research"</li>
+            <li>Get help: "Suggest related work to explore"</li>
+          </ol>
+        </div>
+
+        <div class="workflow">
+          <h3>📚 Learning and Understanding</h3>
+          <ol>
+            <li>Load a foundational paper in your field</li>
+            <li>Ask: "Explain the key concepts in simple terms"</li>
+            <li>Paste complex equations: "Break down this mathematical formulation"</li>
+            <li>Request: "Give me examples of how this is applied"</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="instruction-section">
+        <h2>Tips for Best Results</h2>
+        <ul>
+          <li><strong>Be Specific:</strong> Ask targeted questions about particular aspects</li>
+          <li><strong>Provide Context:</strong> When pasting text, include surrounding context</li>
+          <li><strong>Use Clear Paper:</strong> Click "Clear" between different papers to avoid confusion</li>
+          <li><strong>Break Down Complex Questions:</strong> Ask one thing at a time for clearer answers</li>
+          <li><strong>Copy Key Sections:</strong> For detailed analysis, paste relevant methodology, results, or discussion sections</li>
+        </ul>
+      </div>
+
+      <div class="instruction-section">
+        <h2>Limitations</h2>
+        <ul>
+          <li>Full PDF text extraction is not automatic (requires manual copy-paste for detailed analysis)</li>
+          <li>arXiv papers provide title, authors, and abstract automatically</li>
+          <li>Large papers may require breaking analysis into sections</li>
+          <li>API rate limits may apply depending on usage</li>
+        </ul>
+      </div>
+    </section>
+  </body>
+</html>
