@@ -51,18 +51,21 @@
   border-radius: 18px;
   max-width: 80%;
   word-wrap: break-word;
+  text-align: left;
 }
 
 .user {
   background-color: #e3f2fd;
   margin-left: auto;
   border-bottom-right-radius: 4px;
+  text-align: left;
 }
 
 .bot {
   background-color: #f1f1f1;
   margin-right: auto;
   border-bottom-left-radius: 4px;
+  text-align: left;
 }
 
 .chat-input-container {
