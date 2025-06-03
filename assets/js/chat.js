@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
       paperStatus.className = 'loading';
       
       // Handle arXiv papers
-      if (url.includes('arxiv.org')) {
+      if (url.includes('arxiv.org') && !url.includes('archive.org')) { {
         const paperInfo = await getArxivPaperInfo(url);
           if (paperInfo) {
           paperContext = {
