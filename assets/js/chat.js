@@ -150,13 +150,13 @@ Abstract: ${paperInfo.summary}
 
 PDF URL: ${paperInfo.pdfUrl}
 
-Note: This is the paper's metadata and abstract. For detailed analysis, please copy and paste specific sections from the PDF that you'd like to discuss.`
+Note: PDF text extraction is not available. You can ask questions about the abstract and metadata, or manually copy and paste specific sections from the PDF for detailed analysis.`
           };
           
           paperStatus.textContent = `✅ Loaded: ${paperInfo.title}`;
           paperStatus.className = 'success';
           
-          addMessage(`📄 <strong>${paperInfo.title} loaded:</strong> I'm ready to discuss this paper!`, 'bot');
+          addMessage(`📄 <strong>${paperInfo.title} loaded:</strong> Metadata and abstract available. For detailed analysis, you can copy and paste specific sections from the PDF.`, 'bot');
           return true;
         } else {
           throw new Error('Could not retrieve paper information from arXiv');
@@ -165,15 +165,20 @@ Note: This is the paper's metadata and abstract. For detailed analysis, please c
       
       // Handle other archive.org URLs
       else if (url.includes('archive.org')) {
+        const docInfo = await getArchiveOrgDocInfo(url);
         paperContext = {
-          url: url,
-          title: 'Archive.org Document',
-          content: `Document URL: ${url}\n\nNote: Please copy and paste relevant sections from this document to discuss them.`
+          url: docInfo.url,
+          title: docInfo.title,
+          content: `Document: "${docInfo.title}"
+URL: ${docInfo.url}
+
+Note: Please copy and paste relevant sections from this document to discuss them.`
         };
-          paperStatus.textContent = '✅ Archive.org URL loaded';
+        
+        paperStatus.textContent = `✅ Loaded: ${docInfo.title}`;
         paperStatus.className = 'success';
         
-        addMessage(`📄 <strong>Archive.org document loaded</strong><br><br>I'm ready to discuss this document! Please copy and paste relevant sections or ask questions about it.`, 'bot');
+        addMessage(`📄 <strong>${docInfo.title} loaded:</strong> I'm ready to discuss this document!`, 'bot');
         return true;
       }
       
@@ -198,7 +203,6 @@ Note: This is the paper's metadata and abstract. For detailed analysis, please c
       // Use arXiv API to get paper metadata (using HTTPS)
       const apiUrl = `https://export.arxiv.org/api/query?id_list=${id}`;
       
-      // Note: This might have CORS issues in browser, but shows the concept
       const response = await fetch(apiUrl);
       const xmlText = await response.text();
       
@@ -215,13 +219,14 @@ Note: This is the paper's metadata and abstract. For detailed analysis, please c
       const title = entry.querySelector('title')?.textContent?.trim();
       const summary = entry.querySelector('summary')?.textContent?.trim();
       const authors = Array.from(entry.querySelectorAll('author name')).map(name => name.textContent);
+      const pdfUrl = `https://arxiv.org/pdf/${id}.pdf`;
       
       return {
         title: title || 'Unknown Title',
         authors: authors.length > 0 ? authors.join(', ') : 'Unknown Authors',
         summary: summary || 'No summary available',
         arxivId: id,
-        pdfUrl: `https://arxiv.org/pdf/${id}.pdf`
+        pdfUrl: pdfUrl
       };
     } catch (error) {
       console.error('Error fetching arXiv info:', error);
@@ -229,6 +234,145 @@ Note: This is the paper's metadata and abstract. For detailed analysis, please c
     }
   }
   
+  // Function to extract document info from archive.org URLs
+  async function getArchiveOrgDocInfo(url) {
+    try {
+      // Try to fetch the page to extract title from HTML
+      const response = await fetch(url);
+      const htmlText = await response.text();
+      
+      // Parse HTML response
+      const parser = new DOMParser();
+      const htmlDoc = parser.parseFromString(htmlText, 'text/html');
+      
+      // Try to extract title from various possible sources
+      let title = htmlDoc.querySelector('title')?.textContent?.trim();
+      
+      // Clean up the title (remove "Internet Archive" suffix if present)
+      if (title) {
+        title = title.replace(/\s*:\s*Internet Archive$/, '').trim();
+        title = title.replace(/\s*-\s*Internet Archive$/, '').trim();
+      }
+      
+      // If no title found or title is generic, try to extract from URL
+      if (!title || title === 'Internet Archive') {
+        // Extract filename from URL as fallback
+        const urlParts = url.split('/');
+        const filename = urlParts[urlParts.length - 1];
+        title = filename.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' '); // Remove extension and replace dashes/underscores
+      }
+      
+      return {
+        title: title || 'Archive.org Document',
+        url: url
+      };
+    } catch (error) {
+      console.error('Error fetching archive.org info:', error);
+      // Fallback: extract filename from URL
+      try {
+        const urlParts = url.split('/');
+        const filename = urlParts[urlParts.length - 1];
+        const title = filename.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+        return {
+          title: title || 'Archive.org Document',
+          url: url
+        };
+      } catch (fallbackError) {
+        return {
+          title: 'Archive.org Document',
+          url: url
+        };
+      }
+    }
+  }
+
+  // Function to search for papers on arXiv by topic
+  async function searchArxivPapers(query, maxResults = 5) {
+    try {
+      // Clean and format the search query
+      const searchQuery = encodeURIComponent(query);
+      
+      // Use arXiv API search endpoint
+      const apiUrl = `https://export.arxiv.org/api/query?search_query=all:${searchQuery}&start=0&max_results=${maxResults}&sortBy=relevance&sortOrder=descending`;
+      
+      const response = await fetch(apiUrl);
+      const xmlText = await response.text();
+      
+      // Parse XML response
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+      
+      const entries = Array.from(xmlDoc.querySelectorAll('entry'));
+      
+      if (entries.length === 0) {
+        return null;
+      }
+      
+      // Extract paper information from each entry
+      const papers = entries.map(entry => {
+        const title = entry.querySelector('title')?.textContent?.trim();
+        const summary = entry.querySelector('summary')?.textContent?.trim();
+        const authors = Array.from(entry.querySelectorAll('author name')).map(name => name.textContent);
+        const arxivId = entry.querySelector('id')?.textContent?.replace('http://arxiv.org/abs/', '');
+        
+        return {
+          title: title || 'Unknown Title',
+          authors: authors.length > 0 ? authors.join(', ') : 'Unknown Authors',
+          summary: summary || 'No summary available',
+          arxivId: arxivId,
+          pdfUrl: `https://arxiv.org/pdf/${arxivId}.pdf`,
+          absUrl: `https://arxiv.org/abs/${arxivId}`
+        };
+      });
+      
+      return papers;
+    } catch (error) {
+      console.error('Error searching arXiv papers:', error);
+      return null;
+    }
+  }
+
+  // Function to detect if user is asking to search for papers
+  function detectPaperSearchRequest(message) {
+    const searchPhrases = [
+      'find papers about',
+      'search for papers on',
+      'look for research on',
+      'find research about',
+      'search papers about',
+      'find studies on',
+      'look up papers on',
+      'search for studies about',
+      'find literature on',
+      'search research on',
+      'find me papers',
+      'show me papers',
+      'get papers about',
+      'look for papers',
+      'search for research',
+      'find research papers',
+      'search literature',
+      'papers about',
+      'research on',
+      'studies on'
+    ];
+    
+    const lowerMessage = message.toLowerCase();
+    
+    for (const phrase of searchPhrases) {
+      if (lowerMessage.includes(phrase)) {
+        // Extract the topic after the search phrase
+        const index = lowerMessage.indexOf(phrase);
+        const topic = message.substring(index + phrase.length).trim();
+        console.log(`Search detected! Phrase: "${phrase}", Topic: "${topic}"`);
+        return topic || null;
+      }
+    }
+    
+    console.log(`No search phrase detected in: "${message}"`);
+    return null;
+  }
+
   // Function to clear paper context
   function clearPaperContext() {
     paperContext = null;
@@ -269,6 +413,24 @@ Note: This is the paper's metadata and abstract. For detailed analysis, please c
     
     // Add user message to chat
     addMessage(message, 'user');
+    
+    // Detect if the user is asking to search for papers
+    const searchTopic = detectPaperSearchRequest(message);
+    if (searchTopic) {
+      showThinking();
+      const papers = await searchArxivPapers(searchTopic);
+      removeThinking();
+      
+      if (papers && papers.length > 0) {
+        addMessage(`📄 Found ${papers.length} papers on "${searchTopic}":`, 'bot');
+        papers.forEach(paper => {
+          addMessage(`- <strong>${paper.title}</strong> by ${paper.authors}<br>Abstract: ${paper.summary}<br><a href="${paper.absUrl}" target="_blank">View on arXiv</a> | <a href="${paper.pdfUrl}" target="_blank">Download PDF</a>`, 'bot');
+        });
+      } else {
+        addMessage(`❌ No papers found on "${searchTopic}". Please try a different topic.`, 'bot');
+      }
+      return;
+    }
     
     // Show thinking animation
     showThinking();
