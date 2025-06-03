@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     messageElement.className = `message ${sender}`;
     
     const paragraph = document.createElement('p');
-    paragraph.textContent = message;
+    paragraph.innerHTML = message; // Changed from textContent to innerHTML to support HTML
     
     messageElement.appendChild(paragraph);
     chatMessages.appendChild(messageElement);
@@ -32,8 +32,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Scroll to the bottom of the chat
     chatMessages.scrollTop = chatMessages.scrollHeight;
     
-    // Add to chat history
-    chatHistory.push({ role: sender === 'user' ? 'user' : 'assistant', content: message });
+    // Add to chat history (store plain text version)
+    const plainText = paragraph.textContent; // Get plain text for history
+    chatHistory.push({ role: sender === 'user' ? 'user' : 'assistant', content: plainText });
     
     // Keep history to a reasonable size (last 10 messages)
     if (chatHistory.length > 10) {
@@ -134,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
       paperStatus.className = 'loading';
       
       // Handle arXiv papers
-      if (url.includes('arxiv.org') && !url.includes('archive.org')) { {
+      if (url.includes('arxiv.org') && !url.includes('archive.org')) {
         const paperInfo = await getArxivPaperInfo(url);
           if (paperInfo) {
           paperContext = {
@@ -155,7 +156,7 @@ Note: This is the paper's metadata and abstract. For detailed analysis, please c
           paperStatus.textContent = `✅ Loaded: ${paperInfo.title}`;
           paperStatus.className = 'success';
           
-          addMessage(`📄 **Paper loaded:** I'm ready to discuss this paper!`, 'bot');
+          addMessage(`📄 <strong>${paperInfo.title} loaded:</strong> I'm ready to discuss this paper!`, 'bot');
           return true;
         } else {
           throw new Error('Could not retrieve paper information from arXiv');
@@ -172,7 +173,7 @@ Note: This is the paper's metadata and abstract. For detailed analysis, please c
           paperStatus.textContent = '✅ Archive.org URL loaded';
         paperStatus.className = 'success';
         
-        addMessage(`📄 **Archive.org document loaded**\n\nI'm ready to discuss this document! Please copy and paste relevant sections or ask questions about it.`, 'bot');
+        addMessage(`📄 <strong>Archive.org document loaded</strong><br><br>I'm ready to discuss this document! Please copy and paste relevant sections or ask questions about it.`, 'bot');
         return true;
       }
       
@@ -194,20 +195,26 @@ Note: This is the paper's metadata and abstract. For detailed analysis, please c
       // Extract arXiv ID from URL
       const id = arxivId.replace(/.*arxiv\.org\/(abs|pdf)\//, '').replace('.pdf', '');
       
-      // Use arXiv API to get paper metadata
-      const apiUrl = `http://export.arxiv.org/api/query?id_list=${id}`;
+      // Use arXiv API to get paper metadata (using HTTPS)
+      const apiUrl = `https://export.arxiv.org/api/query?id_list=${id}`;
       
       // Note: This might have CORS issues in browser, but shows the concept
       const response = await fetch(apiUrl);
       const xmlText = await response.text();
       
-      // Parse XML response (simplified)
+      // Parse XML response - look for entry elements, not feed title
       const parser = new DOMParser();
       const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
       
-      const title = xmlDoc.querySelector('title')?.textContent?.replace('arXiv:', '').trim();
-      const summary = xmlDoc.querySelector('summary')?.textContent?.trim();
-      const authors = Array.from(xmlDoc.querySelectorAll('author name')).map(name => name.textContent);
+      // Get the first entry (paper) from the response
+      const entry = xmlDoc.querySelector('entry');
+      if (!entry) {
+        throw new Error('No paper found with this arXiv ID');
+      }
+      
+      const title = entry.querySelector('title')?.textContent?.trim();
+      const summary = entry.querySelector('summary')?.textContent?.trim();
+      const authors = Array.from(entry.querySelectorAll('author name')).map(name => name.textContent);
       
       return {
         title: title || 'Unknown Title',
