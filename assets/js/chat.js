@@ -15,16 +15,41 @@ document.addEventListener('DOMContentLoaded', () => {
   // Chat history to maintain context
   let chatHistory = [];
   
+  // Trade context storage
+  let selectedTrade = 'general';
+  
+  // Trade descriptions for context
+  const tradeDescriptions = {
+    electrician: "an electrician who works with electrical systems, wiring, circuits, and power distribution",
+    mechanic: "a mechanic who works with engines, machinery, mechanical systems, and repairs",
+    construction: "a construction worker who builds structures, works with materials, and uses construction tools",
+    plumber: "a plumber who works with pipes, water systems, drainage, and fluid mechanics",
+    carpenter: "a carpenter who works with wood, building structures, and construction techniques",
+    hvac: "an HVAC technician who works with heating, ventilation, air conditioning, and climate control systems",
+    welder: "a welder who joins metals, works with fabrication, and understands material properties",
+    general: "someone in the trades/construction industry"
+  };
+
   // Paper context storage
   let paperContext = null;
-
   // Function to add a message to the chat UI
   function addMessage(message, sender) {
     const messageElement = document.createElement('div');
     messageElement.className = `message ${sender}`;
     
+    // Format the message for better readability
+    let formattedMessage = message;
+    if (sender === 'bot') {
+      // Split long paragraphs and add line breaks
+      formattedMessage = message
+        .replace(/\. ([A-Z])/g, '.<br><br>$1') // Add breaks after sentences that start new thoughts
+        .replace(/:\s*([A-Z])/g, ':<br><br>$1') // Add breaks after colons
+        .replace(/\n\n/g, '<br><br>') // Convert double newlines to HTML breaks
+        .replace(/\n/g, '<br>'); // Convert single newlines to HTML breaks
+    }
+    
     const paragraph = document.createElement('p');
-    paragraph.innerHTML = message; // Changed from textContent to innerHTML to support HTML
+    paragraph.innerHTML = formattedMessage;
     
     messageElement.appendChild(paragraph);
     chatMessages.appendChild(messageElement);
@@ -64,8 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (thinking) {
       thinking.remove();
     }
-  }
-  // Function to query the Gemini Flash 2.0 API
+  }  // Function to query the Gemini Flash 2.0 API
   async function queryLLM(userMessage) {
     // Check if Gemini API key is configured
     if (!GEMINI_API_KEY) {
@@ -76,12 +100,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const history = chatHistory.slice(-6).map(msg => ({
       role: msg.role === 'user' ? 'user' : 'model',
       parts: [{ text: msg.content }]
-    }));
+    }));    // Create trade context system message
+    const tradeContext = `You are explaining concepts to ${tradeDescriptions[selectedTrade]}. Please tailor your explanations using analogies, terminology, and examples that would be familiar and relevant to someone in this profession. Keep explanations practical and relate technical concepts to hands-on work when possible. 
 
-    // Prepare the user message with paper context if available
+IMPORTANT: Keep your response concise (2-3 short paragraphs maximum). Use simple, clear language. Break up complex ideas into digestible parts.`;
+
+    // Prepare the user message with paper context and trade context
     let contextualMessage = userMessage;
     if (paperContext) {
-      contextualMessage = `Research Paper Context:\n${paperContext.content}\n\nUser Question: ${userMessage}`;
+      contextualMessage = `Research Paper Context:\n${paperContext.content}\n\n${tradeContext}\n\nUser Question: ${userMessage}`;
+    } else {
+      contextualMessage = `${tradeContext}\n\nUser Question: ${userMessage}`;
     }
 
     // Add the new user message
@@ -97,11 +126,10 @@ document.addEventListener('DOMContentLoaded', () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
+        },        body: JSON.stringify({
           contents: contents,
           generationConfig: {
-            maxOutputTokens: 512,
+            maxOutputTokens: 300,
             temperature: 0.7
           }
         })
@@ -473,4 +501,36 @@ Note: Please copy and paste relevant sections from this document to discuss them
   } else {
     addMessage("✅ Connected to Gemini AI model. What would you like to chat about?", "bot");
   }
+
+  // Function to handle trade selection
+  function handleTradeSelection() {
+    const tradeButtons = document.querySelectorAll('.trade-btn');
+    const selectedTradeDisplay = document.getElementById('selected-trade');
+    
+    tradeButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        // Remove active class from all buttons
+        tradeButtons.forEach(btn => btn.classList.remove('active'));
+        
+        // Add active class to clicked button
+        button.classList.add('active');
+        
+        // Update selected trade
+        selectedTrade = button.dataset.trade;
+        
+        // Update display
+        const tradeName = button.textContent.replace(/^[^\s]+\s/, ''); // Remove emoji
+        selectedTradeDisplay.innerHTML = `<span>Current mode: <strong>${tradeName}</strong></span>`;
+        
+        // Add confirmation message
+        addMessage(`🔧 Now explaining like you're ${tradeDescriptions[selectedTrade]}. Ask me about research papers or technical concepts!`, 'bot');
+      });
+    });
+    
+    // Set default selection
+    document.querySelector('[data-trade="general"]').classList.add('active');
+  }
+
+  // Initialize trade selection handling
+  handleTradeSelection();
 });

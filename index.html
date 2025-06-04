@@ -11,23 +11,41 @@
     <script defer src="assets/js/chat.js"></script>
   </head>
   <body>
-    <nav id="navbar-placeholder" aria-label="Main navigation"></nav>
-    <section class="welcome-container">
-      <h1>Welcome to AI Research Helper</h1>
-      <div class="chat-container">
-        <div class="paper-input-container">
-          <div>
-            <input type="url" id="paper-url" placeholder="Enter arXiv or archive.org paper URL (optional)" />
-            <button id="load-paper">Load Paper</button>
-            <button id="clear-paper">Clear</button>
+    <nav id="navbar-placeholder" aria-label="Main navigation"></nav>    <section class="main-container">
+      <div class="trade-selector">
+        <h3>Explain Like I'm A:</h3>
+        <div class="trade-buttons">
+          <button class="trade-btn" data-trade="electrician">⚡ Electrician</button>
+          <button class="trade-btn" data-trade="mechanic">🔧 Mechanic</button>
+          <button class="trade-btn" data-trade="construction">🏗️ Construction Worker</button>
+          <button class="trade-btn" data-trade="plumber">🔧 Plumber</button>
+          <button class="trade-btn" data-trade="carpenter">🪚 Carpenter</button>
+          <button class="trade-btn" data-trade="hvac">❄️ HVAC Tech</button>
+          <button class="trade-btn" data-trade="welder">🔥 Welder</button>
+          <button class="trade-btn" data-trade="general">👷 General</button>
+        </div>
+        <div class="selected-trade" id="selected-trade">
+          <span>Current mode: <strong>General</strong></span>
+        </div>
+      </div>
+      
+      <div class="welcome-container">
+        <h1>AI Research Helper for Trades</h1>
+        <div class="chat-container">
+          <div class="paper-input-container">
+            <div>
+              <input type="url" id="paper-url" placeholder="Enter arXiv or archive.org paper URL (optional)" />
+              <button id="load-paper">Load Paper</button>
+              <button id="clear-paper">Clear</button>
+            </div>
+            <div id="paper-status"></div>
           </div>
-          <div id="paper-status"></div>
-        </div>
-        <div class="chat-messages" id="chat-messages">
-        </div>
-        <div class="chat-input-container">
-          <textarea id="user-input" placeholder="Type your question here..." rows="3"></textarea>
-          <button id="send-button">Send</button>
+          <div class="chat-messages" id="chat-messages">
+          </div>
+          <div class="chat-input-container">
+            <textarea id="user-input" placeholder="Type your question here..." rows="3"></textarea>
+            <button id="send-button">Send</button>
+          </div>
         </div>
       </div>
     </section>
