@@ -83,6 +83,7 @@ body {
   font-weight: 700;
   color: var(--gray-900);
   margin-top: 20px;
+  padding-top: 20px;
   margin-bottom: var(--space-8);
   background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
   -webkit-background-clip: text;
@@ -120,8 +121,7 @@ body {
 
 /* Chat Styles - Modern Design */
 .chat-container {
-  max-width: 900px;
-  margin: var(--space-6) auto;
+  flex: 1;
   background: white;
   border-radius: var(--radius-xl);
   overflow: hidden;
@@ -285,6 +285,68 @@ body {
   40% {
     transform: scale(1);
     opacity: 1;
+  }
+}
+
+@media screen and (max-width: 782px) {
+  .welcome-container {
+    margin: 10px;
+  }
+  .welcome-container h1 {
+    font-size: 1.5rem;
+    justify-content: center;
+    text-align: center;
+  }
+  .personal-photo {
+    width: 100%;
+    height: auto;
+  }
+  .bio {
+    width: auto;
+    align-items: center;
+    padding: 0 20px;
+  }
+  .bio::first-line {
+    font-weight: bold;
+  }
+  
+  .chat-container {
+    margin: 10px;
+  }
+  
+  .message {
+    max-width: 90%;
+  }
+  
+  .chat-input-container {
+    flex-direction: column;
+  }
+  
+  #send-button {
+    margin-left: 0;
+    margin-top: 10px;
+    width: 100%;
+    padding: 10px;
+  }
+}
+
+/* Responsive Design for Chat Layout */
+@media screen and (max-width: 768px) {
+  .chat-layout {
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  
+  .trade-selector {
+    min-width: unset;
+    max-width: unset;
+    width: 100%;
+  }
+  
+  .trade-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2);
   }
 }
 
@@ -633,14 +695,38 @@ body {
 
 /* Main Container Layout */
 .main-container {
-  display: flex;
-  gap: var(--space-6);
   max-width: 1400px;
   margin: 0 auto;
   padding: 70px var(--space-6) var(--space-20) var(--space-6);
 }
 
-/* Trade Selector Panel */
+/* Welcome Container - Now contains the title and chat layout */
+.welcome-container {
+  text-align: center;
+}
+
+.welcome-container h1 {
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-top: 0;
+  margin-bottom: var(--space-8);
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Chat Layout - Contains trade selector and chat container side by side */
+.chat-layout {
+  display: flex;
+  gap: var(--space-6);
+  align-items: flex-start;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Trade Selector Panel - Now positioned within chat layout */
 .trade-selector {
   min-width: 280px;
   max-width: 300px;
@@ -650,8 +736,6 @@ body {
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--gray-200);
   height: fit-content;
-  position: sticky;
-  top: calc(70px + var(--space-4));
 }
 
 .trade-selector h3 {
@@ -713,6 +797,68 @@ body {
 
 .selected-trade strong {
   color: var(--primary-color);
+}
+
+@media screen and (max-width: 782px) {
+  .welcome-container {
+    margin: 10px;
+  }
+  .welcome-container h1 {
+    font-size: 1.5rem;
+    justify-content: center;
+    text-align: center;
+  }
+  .personal-photo {
+    width: 100%;
+    height: auto;
+  }
+  .bio {
+    width: auto;
+    align-items: center;
+    padding: 0 20px;
+  }
+  .bio::first-line {
+    font-weight: bold;
+  }
+  
+  .chat-container {
+    margin: 10px;
+  }
+  
+  .message {
+    max-width: 90%;
+  }
+  
+  .chat-input-container {
+    flex-direction: column;
+  }
+  
+  #send-button {
+    margin-left: 0;
+    margin-top: 10px;
+    width: 100%;
+    padding: 10px;
+  }
+}
+
+/* Responsive Design for Chat Layout */
+@media screen and (max-width: 768px) {
+  .chat-layout {
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  
+  .trade-selector {
+    min-width: unset;
+    max-width: unset;
+    width: 100%;
+  }
+  
+  .trade-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-2);
+  }
 }
 
 @media screen and (max-width: 782px) {
